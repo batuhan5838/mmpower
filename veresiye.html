@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Veresiye Paneli</title>
+  <style>
+    body { font-family: Arial; background: #f1f3f5; margin: 0; padding: 0; }
+    header { background: #d9230f; color: white; text-align: center; padding: 20px; font-size: 24px; font-weight: bold; }
+    .container { max-width: 800px; margin: 30px auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    input, button { width: 100%; padding: 10px; margin: 10px 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+    button { background: #d9230f; color: white; border: none; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <header>Veresiye Listesi</header>
+  <div class="container">
+    <input type="text" id="isim" placeholder="İsim Soyisim" />
+    <input type="number" id="borc" placeholder="Borç Tutarı" />
+    <button onclick="veresiyeEkle()">Veresiye Ekle</button>
+
+    <table>
+      <thead>
+        <tr>
+          <th>İsim Soyisim</th>
+          <th>Borç</th>
+          <th>Sil</th>
+        </tr>
+      </thead>
+      <tbody id="veresiyeListe"></tbody>
+    </table>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyB7cHDTN3v9KEnnM-TXSQGY67MecqegqII",
+      authDomain: "code-presenter-2d9fn.firebaseapp.com",
+      databaseURL: "https://code-presenter-2d9fn-default-rtdb.firebaseio.com",
+      projectId: "code-presenter-2d9fn",
+      storageBucket: "code-presenter-2d9fn.appspot.com",
+      messagingSenderId: "746122920848",
+      appId: "1:746122920848:web:714a32d64a3eea77096915"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function veresiyeEkle() {
+      const isim = document.getElementById("isim").value;
+      const borc = parseFloat(document.getElementById("borc").value);
+
+      if (!isim || isNaN(borc)) {
+        alert("Tüm alanları doldurun!");
+        return;
+      }
+
+      db.ref("veresiyeler").push({ isim, borc });
+    }
+
+    db.ref("veresiyeler").on("value", snapshot => {
+      const tbody = document.getElementById("veresiyeListe");
+      tbody.innerHTML = "";
+      snapshot.forEach(child => {
+        const veri = child.val();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${veri.isim}</td>
+          <td>₺${veri.borc}</td>
+          <td><button onclick="silVeresiye('${child.key}')">Sil</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    });
+
+    function silVeresiye(id) {
+      if (confirm("Bu veresiye kaydını silmek istiyor musunuz?")) {
+        db.ref("veresiyeler/" + id).remove();
+      }
+    }
+  </script>
+</body>
+</html>
