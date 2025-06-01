@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MMPOWER CARCARE</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f1f3f5;
+    }
+
+    header {
+      background-color: #d9230f;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 30px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    .form-section, .summary-section, .table-section {
+      margin-bottom: 30px;
+    }
+
+    input, select, button {
+      padding: 10px;
+      margin: 8px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #d9230f;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <header>MMPOWER CARCARE</header>
+  <div class="container">
+    <div class="form-section">
+      <h2>Yıkama Kaydı</h2>
+      <input type="text" id="personel" placeholder="Personel Adı" />
+      <input type="text" id="plaka" placeholder="Araç Plaka" />
+      <input type="date" id="tarih" />
+      <select id="tur">
+        <option>İç Dış</option>
+        <option>Motor</option>
+        <option>Detaylı</option>
+      </select>
+      <input type="number" id="ucret" placeholder="Ücret" />
+      <button onclick="kayitEkle()">Kaydı Ekle</button>
+    </div>
+
+    <div class="summary-section">
+      <div><strong>Bugün Yıkanan Araç:</strong> <span id="gunlukCount">0</span></div>
+      <div><strong>Günlük Ciro:</strong> ₺<span id="gunlukCiro">0</span></div>
+      <div><strong>Haftalık Ciro:</strong> ₺<span id="haftalikCiro">0</span></div>
+      <div><strong>Aylık Ciro:</strong> ₺<span id="aylikCiro">0</span></div>
+    </div>
+
+    <div class="table-section">
+      <table>
+        <thead>
+          <tr>
+            <th>Personel</th>
+            <th>Plaka</th>
+            <th>Tarih</th>
+            <th>Tür</th>
+            <th>Ücret</th>
+            <th>Sil</th>
+          </tr>
+        </thead>
+        <tbody id="kayitlar"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Firebase SDK (uyumlu sürüm) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyB7cHDTN3v9KEnnM-TXSQGY67MecqegqII",
+      authDomain: "code-presenter-2d9fn.firebaseapp.com",
+      databaseURL: "https://code-presenter-2d9fn-default-rtdb.firebaseio.com",
+      projectId: "code-presenter-2d9fn",
+      storageBucket: "code-presenter-2d9fn.appspot.com",
+      messagingSenderId: "746122920848",
+      appId: "1:746122920848:web:714a32d64a3eea77096915"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function kayitEkle() {
+      const personel = document.getElementById('personel').value;
+      const plaka = document.getElementById('plaka').value;
+      const tarih = document.getElementById('tarih').value;
+      const tur = document.getElementById('tur').value;
+      const ucret = parseFloat(document.getElementById('ucret').value);
+
+      if (!personel || !plaka || !tarih || isNaN(ucret)) {
+        alert("Tüm alanları doldurun!");
+        return;
+      }
+
+      const yeniRef = db.ref("yikamalar").push();
+      yeniRef.set({ personel, plaka, tarih, tur, ucret });
+    }
+
+    db.ref("yikamalar").on("value", snapshot => {
+      const tbody = document.getElementById('kayitlar');
+      tbody.innerHTML = "";
+
+      let gunluk = 0, haftalik = 0, aylik = 0, gunlukCount = 0;
+      const bugun = new Date();
+
+      snapshot.forEach(child => {
+        const kayit = child.val();
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td>${kayit.personel}</td>
+          <td>${kayit.plaka}</td>
+          <td>${kayit.tarih}</td>
+          <td>${kayit.tur}</td>
+          <td>₺${kayit.ucret}</td>
+          <td><button onclick="sil('${child.key}')">Sil</button></td>
+        `;
+        tbody.appendChild(tr);
+
+        const tarih = new Date(kayit.tarih);
+        const farkGun = (bugun - tarih) / (1000 * 60 * 60 * 24);
+
+        if (farkGun < 1) {
+          gunluk += kayit.ucret;
+          gunlukCount++;
+        }
+        if (farkGun < 7) haftalik += kayit.ucret;
+        if (bugun.getMonth() === tarih.getMonth() && bugun.getFullYear() === tarih.getFullYear()) {
+          aylik += kayit.ucret;
+        }
+      });
+
+      document.getElementById("gunlukCiro").innerText = gunluk.toFixed(2);
+      document.getElementById("haftalikCiro").innerText = haftalik.toFixed(2);
+      document.getElementById("aylikCiro").innerText = aylik.toFixed(2);
+      document.getElementById("gunlukCount").innerText = gunlukCount;
+    });
+
+    function sil(id) {
+      if (confirm("Bu kaydı silmek istediğinize emin misiniz?")) {
+        db.ref("yikamalar/" + id).remove();
+      }
+    }
+  </script>
+</body>
+</html>
