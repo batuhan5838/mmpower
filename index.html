@@ -48,6 +48,12 @@
       cursor: pointer;
     }
 
+    .veresiye-btn {
+      background-color: #007bff;
+      color: white;
+      margin-top: 10px;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -77,9 +83,15 @@
         <option>Seramik Kaplama</option>
         <option>Sadece İç</option>
         <option>Sadece Dış</option>
+        <option>Veresiye</option>
       </select>
       <input type="number" id="ucret" placeholder="Ücret" />
       <button onclick="kayitEkle()">Kaydı Ekle</button>
+
+      <!-- Veresiye Paneli Butonu -->
+      <a href="veresiye.html" target="_blank">
+        <button class="veresiye-btn">Veresiye Paneli</button>
+      </a>
     </div>
 
     <div class="summary-section">
@@ -106,7 +118,7 @@
     </div>
   </div>
 
-  <!-- Firebase SDK (uyumlu sürüm) -->
+  <!-- Firebase Scriptleri -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
